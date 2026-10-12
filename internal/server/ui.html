@@ -1,0 +1,3029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynago — Database API Engine</title>
+  <style>
+    :root {
+      --bg: #121316;
+      --card-bg: #18191f;
+      --card-header: #20222a;
+      --card-border: #2c2f3b;
+      --card-border-subtle: #242630;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      height: 100vh;
+      display: flex;
+      flex-direction: row;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    /* Left App Sidebar */
+    .app-sidebar {
+      width: 230px;
+      min-width: 230px;
+      background: #14151a;
+      border-right: 1px solid var(--card-border);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+      user-select: none;
+    }
+
+    .sidebar-brand-box {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-badge {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      background: #23252f;
+      color: #93c5fd;
+      border: 1px solid #3b4256;
+      border-radius: 4px;
+      padding: 3px 6px;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .nav-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 10px 8px 4px 8px;
+    }
+
+    .nav-item {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-item:hover {
+      color: #fff;
+      background: #1c1e25;
+    }
+
+    .nav-item.active {
+      background: #232630;
+      border-color: #383c4a;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .tab-badge {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 600;
+      border: 1px solid var(--card-border);
+      background: #1a1c22;
+      color: var(--text-muted);
+    }
+    .badge-active { color: #4ade80; border-color: #14532d; }
+    .badge-locked { color: #f87171; border-color: #7f1d1d; }
+
+    .sidebar-footer {
+      padding: 12px 14px;
+      border-top: 1px solid var(--card-border);
+      background: #101115;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-auth {
+      background: #1c1e24;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-auth:hover {
+      background: #232630;
+      color: var(--text);
+    }
+    .btn-auth.logged-in {
+      color: #4ade80;
+      border-color: #166534;
+    }
+    .btn-auth.auth-required {
+      color: #fbbf24;
+      border-color: #854d0e;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      display: inline-block;
+    }
+    .dot-warning { background: #fbbf24; }
+    .dot-gray { background: #6b7280; }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      background: #16171d;
+      border: 1px solid var(--card-border);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Buttons */
+    .btn-run, .btn-primary {
+      background: var(--primary);
+      border: 1px solid var(--primary-hover);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-run:hover, .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .chip-btn {
+      background: #1f2129;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .chip-btn:hover {
+      background: #282b35;
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #261616;
+      border: 1px solid #571e1e;
+      color: #f87171;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-danger:hover {
+      background: #351c1c;
+    }
+
+    /* Inputs & Selects */
+    .custom-select, .custom-input {
+      background: #14151b;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      outline: none;
+    }
+    .custom-select:focus, .custom-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Layout for Endpoints */
+    .endpoints-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 16px;
+      height: calc(100vh - 40px);
+    }
+
+    .sidebar-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--card-header);
+    }
+    .sidebar-search {
+      width: 100%;
+      background: #14151b;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      font-family: var(--font);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      outline: none;
+    }
+    .sidebar-search:focus {
+      border-color: var(--primary);
+    }
+
+    .table-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 6px;
+    }
+
+    .table-item {
+      padding: 8px 12px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .table-item:hover {
+      background: #20222a;
+      color: #fff;
+    }
+    .table-item.active {
+      background: #242732;
+      border: 1px solid #3b3f4f;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .detail-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Endpoint Card */
+    .endpoint-card {
+      background: #14151a;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .endpoint-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card-header);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .method-pill {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+    .m-get { background: #132433; color: #60a5fa; border: 1px solid #1e3a5f; }
+    .m-post { background: #11281d; color: #4ade80; border: 1px solid #166534; }
+    .m-patch { background: #2b2311; color: #facc15; border: 1px solid #854d0e; }
+    .m-delete { background: #2d1414; color: #f87171; border: 1px solid #991b1b; }
+
+    .endpoint-path {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .endpoint-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .endpoint-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* JSON Box */
+    .json-box {
+      background: #0f1014;
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #e2e8f0;
+      overflow-x: auto;
+      max-height: 260px;
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: #20222a;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-family: var(--font);
+      cursor: pointer;
+    }
+    .copy-btn:hover { background: #2b2e3a; color: #fff; }
+
+    /* SQL Console */
+    .console-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sql-editor-wrapper {
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+      background: #0f1014;
+      overflow: hidden;
+    }
+
+    .sql-textarea {
+      width: 100%;
+      height: 140px;
+      background: transparent;
+      border: none;
+      color: #e2e8f0;
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 14px;
+      outline: none;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .editor-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--card-header);
+      border-top: 1px solid var(--card-border);
+    }
+
+    .snippet-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .query-meta-bar {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Data Explorer */
+    .explorer-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .explorer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .table-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-section {
+      background: #14151b;
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 160px 140px 1fr 60px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .btn-remove-filter {
+      background: #241616;
+      border: 1px solid #4a1f1f;
+      color: #f87171;
+      height: 32px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .btn-add-filter {
+      background: #1f2129;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-add-filter:hover {
+      background: #282b35;
+      color: #fff;
+    }
+
+    .explorer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--card-header);
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+    }
+
+    .url-preview {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #93c5fd;
+      background: #0f1014;
+      border: 1px solid var(--card-border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      max-width: 500px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Tables */
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+      background: #14151b;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--card-header);
+      padding: 9px 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--card-border);
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #20222a;
+      color: var(--text);
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: #1c1d25;
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .page-btn-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .page-btn {
+      background: #1f2129;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .page-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .page-btn:not(:disabled):hover {
+      background: #282b35;
+    }
+
+    /* Locked / Disabled View */
+    .locked-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 32px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      max-width: 520px;
+      margin: 40px auto;
+    }
+    .locked-card h3 {
+      font-size: 16px;
+      color: #fff;
+    }
+    .locked-card p {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .locked-card code {
+      background: #121316;
+      border: 1px solid var(--card-border);
+      color: #93c5fd;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    /* RBAC Tab */
+    .rbac-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .rbac-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .rbac-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .role-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .role-admin { background: #261616; color: #f87171; border: 1px solid #571e1e; }
+    .role-editor { background: #142232; color: #60a5fa; border: 1px solid #1e3a5f; }
+    .role-viewer { background: #12281d; color: #4ade80; border: 1px solid #166534; }
+
+    .perm-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* Live Stream Tab */
+    .stream-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .stream-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+    }
+    .stream-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: calc(100vh - 270px);
+      overflow-y: auto;
+    }
+    .stream-event-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .action-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .action-insert { background: #12281d; color: #4ade80; border: 1px solid #166534; }
+    .action-update { background: #2b2311; color: #facc15; border: 1px solid #854d0e; }
+    .action-delete { background: #261616; color: #f87171; border: 1px solid #571e1e; }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      width: 100%;
+      max-width: 440px;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 14px 18px;
+      background: var(--card-header);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-body {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn-close:hover { color: #fff; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1f2129;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 999;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left App Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-brand-box">
+      <div class="brand-badge">DYNAGO</div>
+      <div>
+        <div class="brand-title">Dynago</div>
+        <div class="brand-subtitle">Database Engine</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Core APIs</div>
+      <button id="tabBtnEndpoints" class="nav-item tab-btn active" onclick="switchTab('endpoints')">
+        <span>Endpoints</span>
+        <span id="badge-endpoints" class="tab-badge">REST</span>
+      </button>
+      <button id="tabBtnExplorer" class="nav-item tab-btn" onclick="switchTab('explorer')">
+        <span>Data Explorer</span>
+        <span id="badge-explorer" class="tab-badge">...</span>
+      </button>
+      <button id="tabBtnFunctions" class="nav-item tab-btn" onclick="switchTab('functions')">
+        <span>Functions</span>
+        <span id="badge-functions" class="tab-badge">RPC</span>
+      </button>
+
+      <div class="nav-section-title" id="navSectionSecured" style="display:none;">Management</div>
+      <button id="tabBtnStream" class="nav-item tab-btn" onclick="switchTab('stream')" style="display:none;">
+        <span>Live Stream</span>
+        <span id="badge-stream" class="tab-badge badge-active">Live</span>
+      </button>
+      <button id="tabBtnSql" class="nav-item tab-btn" onclick="switchTab('sql')" style="display:none;">
+        <span>SQL Console</span>
+        <span id="badge-sql" class="tab-badge">...</span>
+      </button>
+      <button id="tabBtnRbac" class="nav-item tab-btn" onclick="switchTab('rbac')" style="display:none;">
+        <span>Users & Access</span>
+        <span id="badge-rbac" class="tab-badge">RBAC</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button id="btnAuth" class="btn-auth" onclick="openAuthModal()" style="width:100%; justify-content:center;">
+        <span id="authStatusDot" class="status-dot dot-gray"></span>
+        <span id="authStatusText">Sign In</span>
+      </button>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+        <span id="server-status" style="font-size:11px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Connecting...</span>
+        <button class="chip-btn" style="font-size:11px; padding:2px 7px;" onclick="refreshSchema()" title="Refresh database schema">Sync</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:14px; font-weight:600;">API Authentication</h3>
+        <button class="btn-close" onclick="closeAuthModal()">x</button>
+      </div>
+      <div class="modal-body">
+        <div id="authNotice" style="font-size:12px; color:var(--text-muted); line-height:1.5;"></div>
+
+        <div id="authTabsNav" style="display:flex; gap:4px; margin-top:4px; background:#121316; padding:3px; border-radius:4px; border:1px solid var(--card-border);">
+          <button id="authTabBtnLogin" class="tab-btn active" style="flex:1; justify-content:center; padding:5px 8px; font-size:12px;" onclick="switchAuthMode('login')">Sign In</button>
+          <button id="authTabBtnRegister" class="tab-btn" style="flex:1; justify-content:center; padding:5px 8px; font-size:12px;" onclick="switchAuthMode('register')">Create Account</button>
+        </div>
+        
+        <!-- Sign In Form -->
+        <div id="authLoginForm" style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Username</label>
+            <input type="text" id="authUsername" class="custom-input" style="width:100%;" placeholder="username">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Password</label>
+            <input type="password" id="authPassword" class="custom-input" style="width:100%;" placeholder="password">
+          </div>
+          <button class="btn-run" style="width:100%; justify-content:center; padding:8px; margin-top:4px;" onclick="submitLogin()">
+            Sign In & Obtain Token
+          </button>
+        </div>
+
+        <!-- Create Account Form -->
+        <div id="authRegisterForm" style="display:none; flex-direction:column; gap:10px; margin-top:6px;">
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Username</label>
+            <input type="text" id="regUsername" class="custom-input" style="width:100%;" placeholder="newuser">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Password</label>
+            <input type="password" id="regPassword" class="custom-input" style="width:100%;" placeholder="password">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Confirm Password</label>
+            <input type="password" id="regConfirmPassword" class="custom-input" style="width:100%;" placeholder="password">
+          </div>
+          <button class="btn-run" style="width:100%; justify-content:center; padding:8px; margin-top:4px;" onclick="submitRegister()">
+            Register & Sign In
+          </button>
+        </div>
+
+        <!-- Logged In State -->
+        <div id="authLoggedInState" style="display:none; flex-direction:column; gap:10px; margin-top:6px;">
+          <div style="background:#11281d; border:1px solid #166534; border-radius:4px; padding:10px; font-size:12px; color:#4ade80;">
+            Active session: <strong id="loggedInUsername">admin</strong> (<span id="loggedInRole">admin</span>)
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Authorization Header:</label>
+            <div class="json-box" style="max-height:80px; font-size:11px; word-break:break-all;" id="currentJWTBox"></div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="chip-btn" style="flex:1;" onclick="copyToken()">Copy Token</button>
+            <button class="btn-danger" style="flex:1;" onclick="logoutUser()">Log Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main View -->
+  <main>
+    <!-- TAB 1: ENDPOINTS & EXAMPLES -->
+    <div id="tab-endpoints" class="tab-content active">
+      <div class="endpoints-layout">
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <input type="text" id="tableSearch" class="sidebar-search" placeholder="Filter tables..." oninput="filterTables()">
+          </div>
+          <div id="tableList" class="table-list"></div>
+        </div>
+
+        <div id="detailPanel" class="detail-panel">
+          <div style="color: var(--text-muted); font-size: 13px;">Select a table from the sidebar to inspect its auto-generated REST endpoints, schema, and JSON examples.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SQL CONSOLE -->
+    <div id="tab-sql" class="tab-content">
+      <div id="sql-disabled-view" class="locked-card" style="display:none;">
+        <h3>SQL Query Console Disabled</h3>
+        <p>Running SQL queries in UI mode is disabled for security. To enable it, add the following flag to your <code>.env</code> file and restart Dynago:</p>
+        <code>DYNAGO_ENABLE_SQL=true</code>
+      </div>
+
+      <div id="sql-enabled-view" class="console-container" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2 style="font-size:16px;">SQL Console</h2>
+            <p style="font-size:12px; color:var(--text-muted);">Execute arbitrary SELECT, INSERT, UPDATE queries against your database.</p>
+          </div>
+          <div class="query-meta-bar" id="sqlMetaBar"></div>
+        </div>
+
+        <div class="sql-editor-wrapper">
+          <textarea id="sqlQueryInput" class="sql-textarea" placeholder="SELECT * FROM products LIMIT 10;" spellcheck="false"></textarea>
+          <div class="editor-toolbar">
+            <div class="snippet-chips" id="sqlSnippetChips"></div>
+            <button class="btn-run" onclick="runSQLQuery()">
+              Run Query <span style="font-size:11px; opacity:0.8;">(Ctrl+Enter)</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="sqlResultsWrapper" style="display:none; flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:var(--text-muted);" id="sqlResultCount"></span>
+            <button class="chip-btn" onclick="exportSQLCSV()">Export CSV</button>
+          </div>
+          <div class="table-responsive">
+            <table id="sqlResultsTable"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: DATA EXPLORER -->
+    <div id="tab-explorer" class="tab-content">
+      <div id="explorer-disabled-view" class="locked-card" style="display:none;">
+        <h3>Data Explorer Disabled</h3>
+        <p>Viewing table data with dynamic filters and pagination is disabled. To enable it, add the following flag to your <code>.env</code> file and restart Dynago:</p>
+        <code>DYNAGO_ENABLE_DATA_VIEW=true</code>
+      </div>
+
+      <div id="explorer-enabled-view" class="explorer-container" style="display:none;">
+        <div class="explorer-header">
+          <div class="table-select-wrap">
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Table:</label>
+            <select id="explorerTableSelect" class="custom-select" onchange="onExplorerTableChange()"></select>
+          </div>
+          <div class="url-preview" id="explorerUrlPreview">GET /api/v1/...</div>
+        </div>
+
+        <!-- Filter Builder -->
+        <div class="filter-section">
+          <div class="filter-header">
+            <span style="font-size:12px; font-weight:600; color:var(--text);">Dynamic Filters</span>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-add-filter" onclick="addFilterRow()">+ Add Filter</button>
+              <button class="btn-add-filter" onclick="clearFilters()">Reset</button>
+              <button class="btn-run" style="padding:4px 10px; font-size:12px;" onclick="loadExplorerData(1)">Apply Filters</button>
+            </div>
+          </div>
+          <div id="filterList" class="filter-list"></div>
+        </div>
+
+        <!-- Controls: Sort & Limit -->
+        <div class="explorer-toolbar">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <label style="font-size:12px; color:var(--text-muted);">Sort by:</label>
+            <select id="sortColumnSelect" class="custom-select" onchange="loadExplorerData(1)"></select>
+            <select id="sortOrderSelect" class="custom-select" onchange="loadExplorerData(1)">
+              <option value="asc">Ascending (ASC)</option>
+              <option value="desc">Descending (DESC)</option>
+            </select>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="font-size:12px; color:var(--text-muted);">Limit:</label>
+            <select id="limitSelect" class="custom-select" onchange="loadExplorerData(1)">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+            </select>
+            <span id="limitCappedNotice" style="font-size:11px; color:var(--text-dim);"></span>
+          </div>
+        </div>
+
+        <!-- Data Grid -->
+        <div class="table-responsive">
+          <table id="explorerDataTable"></table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="pagination-bar">
+          <span id="paginationInfo">Showing 0 of 0 records</span>
+          <div class="page-btn-group">
+            <button id="btnPrevPage" class="page-btn" onclick="changePage(-1)">Previous</button>
+            <span id="pageIndicator" style="display:flex; align-items:center; padding:0 8px; font-weight:600;">Page 1 of 1</span>
+            <button id="btnNextPage" class="page-btn" onclick="changePage(1)">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: USERS & PERMISSIONS (RBAC) -->
+    <div id="tab-rbac" class="tab-content">
+      <div id="rbac-disabled-view" class="locked-card" style="display:none;">
+        <h3>Authentication & RBAC Disabled</h3>
+        <p>To enable user management and table-level access control, configure <code>DYNAGO_JWT_SECRET</code> in your <code>.env</code> file and restart Dynago:</p>
+        <code>DYNAGO_JWT_SECRET=your_jwt_secret_here</code>
+      </div>
+
+      <div id="rbac-auth-required-view" class="locked-card" style="display:none;">
+        <h3>Admin Sign In Required</h3>
+        <p>You must be signed in with an administrative account to manage users and configure table permissions.</p>
+        <button class="btn-run" style="margin-top:8px;" onclick="openAuthModal()">Sign In</button>
+      </div>
+
+      <div id="rbac-enabled-view" class="rbac-container" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2 style="font-size:16px;">Users & Permissions</h2>
+            <p style="font-size:12px; color:var(--text-muted);">Manage registered database users and configure table-level access rules.</p>
+          </div>
+          <button class="chip-btn" onclick="loadRBACData()">Refresh</button>
+        </div>
+
+        <div class="rbac-grid">
+          <!-- Left: User Management -->
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <!-- Create User Card -->
+            <div class="rbac-card">
+              <h3 style="font-size:13px; font-weight:600;">Create User</h3>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                  <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Username</label>
+                  <input type="text" id="newUsername" class="custom-input" style="width:100%;" placeholder="e.g. alice">
+                </div>
+                <div>
+                  <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Password</label>
+                  <input type="password" id="newPassword" class="custom-input" style="width:100%;" placeholder="Password">
+                </div>
+                <div>
+                  <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Role</label>
+                  <select id="newUserRole" class="custom-select" style="width:100%;">
+                    <option value="viewer">Viewer (Read-only)</option>
+                    <option value="editor">Editor (Read, Insert, Update)</option>
+                    <option value="admin">Admin (Full Access)</option>
+                  </select>
+                </div>
+                <button class="btn-run" style="margin-top:4px; justify-content:center;" onclick="handleCreateUserSubmit()">
+                  Create User
+                </button>
+              </div>
+            </div>
+
+            <!-- Users List Card -->
+            <div class="rbac-card">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <h3 style="font-size:13px; font-weight:600;">User Accounts</h3>
+                <span id="userCountBadge" style="font-size:11px; color:var(--text-dim);">0 users</span>
+              </div>
+              <div class="table-responsive" style="max-height:340px;">
+                <table id="usersTable">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="usersTableBody">
+                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Loading users...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Table Permissions Matrix -->
+          <div class="rbac-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h3 style="font-size:13px; font-weight:600;">Table Permissions Matrix</h3>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Select a role to inspect and configure table-level access rules.</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:12px; color:var(--text-muted);">Role:</label>
+                <select id="permRoleSelect" class="custom-select" onchange="renderPermissionsMatrix()">
+                  <option value="viewer">Viewer</option>
+                  <option value="editor">Editor</option>
+                  <option value="anon">Anonymous (Not Logged In)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="background:#14151b; border:1px solid var(--card-border); border-radius:4px; padding:8px 12px; font-size:12px; color:var(--text-muted);">
+              Changes to permissions and table visibility are saved immediately to the database (<code>_dynago_permissions</code> & <code>_dynago_table_perms</code>).
+            </div>
+
+            <div class="table-responsive">
+              <table id="permsTable">
+                <thead>
+                  <tr>
+                    <th>Table Name</th>
+                    <th style="text-align:center; width:120px;">Visibility</th>
+                    <th style="text-align:center; width:70px;">Read</th>
+                    <th style="text-align:center; width:70px;">Insert</th>
+                    <th style="text-align:center; width:70px;">Update</th>
+                    <th style="text-align:center; width:70px;">Delete</th>
+                  </tr>
+                </thead>
+                <tbody id="permsTableBody">
+                  <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Loading table permissions...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: REAL-TIME SSE STREAM -->
+    <div id="tab-stream" class="tab-content">
+      <div id="streamLockedView" class="locked-card" style="display:none; margin:40px auto; max-width:440px; text-align:center;">
+        <h3>Live Stream Requires Authentication</h3>
+        <p style="margin:8px 0 16px 0; color:var(--text-muted); font-size:13px;">Real-time database mutation streams are secured. Sign in with an authorized account to connect.</p>
+        <button class="btn-run" style="margin:0 auto;" onclick="openAuthModal()">Sign In</button>
+      </div>
+
+      <div id="streamActiveView" class="stream-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2 style="font-size:16px;">Real-Time Mutation Stream (SSE)</h2>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Live stream of INSERT, UPDATE, and DELETE events pushed directly from PostgreSQL over Server-Sent Events.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div id="streamStatusPill" class="status-pill" style="color:#fbbf24;">
+              <span id="streamStatusDot" class="status-dot dot-warning" style="margin-right:6px;"></span>
+              <span id="streamStatusText">Disconnected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stream Toolbar -->
+        <div class="stream-toolbar">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Stream Target:</label>
+            <select id="streamTargetSelect" class="custom-select" onchange="onStreamTargetChange()">
+              <option value="">All Tables (Global Stream)</option>
+            </select>
+
+            <button id="btnToggleStream" class="btn-run" style="font-size:12px; padding:5px 12px;" onclick="toggleSSEStream()">
+              Connect Stream
+            </button>
+            <button class="chip-btn" onclick="clearStreamEvents()">
+              Clear Feed
+            </button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span id="streamEventCountBadge" style="font-size:12px; color:var(--text-dim);">0 events received</span>
+            <div class="url-preview" id="streamUrlPreview">GET /api/v1/stream</div>
+          </div>
+        </div>
+
+        <!-- Event Feed -->
+        <div class="stream-feed" id="streamFeed">
+          <div id="streamEmptyState" class="locked-card" style="margin:20px auto;">
+            <h3>Waiting for real-time mutations</h3>
+            <p>Click Connect Stream above, then perform any INSERT, UPDATE, or DELETE via the REST API or SQL Console to see events arrive here in real time.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: CUSTOM FUNCTIONS & RPC -->
+    <div id="tab-functions" class="tab-content">
+      <div class="sql-container" style="max-width:1200px; margin:0 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:16px; margin-bottom:4px;">Custom Functions & RPC</h2>
+            <p style="font-size:12px; color:var(--text-muted); margin:0;">
+              Execute sandboxed WebAssembly microservice routes and PostgreSQL stored procedures over HTTP.
+            </p>
+          </div>
+          <button class="chip-btn" onclick="loadFunctionsData()">
+            Reload Catalog
+          </button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:300px 1fr; gap:16px;">
+          <!-- Left: Function Catalog -->
+          <div class="sql-card" style="padding:14px; max-height:680px; overflow-y:auto;">
+            <div style="font-size:11px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">
+              Catalog Functions (<span id="functionsTotalCount">0</span>)
+            </div>
+            <div id="functionsList" style="display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:12px; color:var(--text-dim); padding:10px; text-align:center;">
+                Loading functions catalog...
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Interactive Invocation Console -->
+          <div class="sql-card" style="padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+              <div>
+                <h3 id="fnActiveTitle" style="font-size:15px; margin-bottom:4px;">Select a Function</h3>
+                <div id="fnActiveDescription" style="font-size:12px; color:var(--text-muted);">
+                  Select any function on the left to inspect parameters and invoke it.
+                </div>
+              </div>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span id="fnActiveVisibilityBadge" class="status-pill" style="display:none; font-size:11px; padding:2px 8px;"></span>
+                <span id="fnActiveTypeBadge" class="status-pill" style="display:none; font-size:11px; padding:2px 8px;"></span>
+                <button id="btnToggleFunctionVisibility" class="chip-btn" style="display:none; font-size:11px; padding:3px 8px;" onclick="toggleSelectedFunctionVisibility()">Toggle Visibility</button>
+              </div>
+            </div>
+
+            <!-- Endpoint Preview -->
+            <div style="margin-bottom:12px;">
+              <label style="font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase; display:block; margin-bottom:4px;">Endpoint URL</label>
+              <div id="fnEndpointUrl" class="url-preview" style="font-size:12px; padding:6px 10px;">POST /api/v1/functions/...</div>
+            </div>
+
+            <!-- Parameters / Signature -->
+            <div id="fnSignatureRow" style="margin-bottom:12px; display:none;">
+              <label style="font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase; display:block; margin-bottom:4px;">Arguments</label>
+              <div id="fnSignatureText" style="font-size:12px; color:#cbd5e1; font-family:monospace; background:rgba(0,0,0,0.25); padding:6px 10px; border-radius:4px; border:1px solid var(--border);"></div>
+            </div>
+
+            <!-- JSON Input Payload -->
+            <div style="margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label style="font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase;">Input Payload (JSON)</label>
+                <button class="chip-btn" style="font-size:10px; padding:2px 6px;" onclick="formatFunctionInput()">Format JSON</button>
+              </div>
+              <textarea id="fnInputBody" class="sql-textarea" style="height:120px; font-size:12px;" placeholder='{"param": "value"}'></textarea>
+            </div>
+
+            <!-- Invocation Controls -->
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+              <button id="btnExecuteFunction" class="btn-run" style="font-size:12px; padding:6px 14px;" onclick="invokeFunction()">
+                Execute Function
+              </button>
+              <button class="chip-btn" style="font-size:12px;" onclick="clearFunctionOutput()">
+                Clear Output
+              </button>
+              <span id="fnExecDuration" style="font-size:12px; color:var(--text-dim); margin-left:auto;"></span>
+            </div>
+
+            <!-- Response Output Box -->
+            <div>
+              <label style="font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase; display:block; margin-bottom:4px;">Response Output</label>
+              <pre id="fnOutputBox" class="json-box" style="min-height:160px; max-height:280px; font-size:12px; margin:0; padding:10px;">(Response will appear here)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script>
+    let appMeta = null;
+    let selectedTable = null;
+    let explorerCurrentPage = 1;
+    let lastSQLData = null;
+
+    function getAuthHeaders(headers = {}) {
+      const token = localStorage.getItem('dynago_jwt_token');
+      if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+      }
+      return headers;
+    }
+
+    async function init() {
+      try {
+        const res = await fetch('/api/v1/_ui/meta', { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error('Meta API returned ' + res.status);
+        appMeta = await res.json();
+        
+        // Sync authenticated user info directly from server response
+        if (appMeta.user) {
+          localStorage.setItem('dynago_user_name', appMeta.user.username);
+          localStorage.setItem('dynago_user_role', appMeta.user.role);
+        } else if (appMeta.flags.auth_enabled && !localStorage.getItem('dynago_jwt_token')) {
+          localStorage.removeItem('dynago_user_name');
+          localStorage.removeItem('dynago_user_role');
+        }
+
+        // Update header status
+        document.getElementById('server-status').textContent = 
+          appMeta.tables.length + ' Tables | Port ' + appMeta.server.port;
+        
+        // Update auth state in UI
+        updateAuthUI();
+
+        // Update badges
+        const sqlBadge = document.getElementById('badge-sql');
+        const userRole = localStorage.getItem('dynago_user_role') || (localStorage.getItem('dynago_jwt_token') ? 'viewer' : 'anonymous');
+        const isAdmin = !appMeta.flags.auth_enabled || userRole === 'admin';
+
+        if (appMeta.flags.enable_sql && isAdmin) {
+          sqlBadge.textContent = 'Enabled';
+          sqlBadge.className = 'tab-badge badge-active';
+          document.getElementById('sql-enabled-view').style.display = 'flex';
+          document.getElementById('sql-disabled-view').style.display = 'none';
+        } else {
+          sqlBadge.textContent = (appMeta.flags.enable_sql && !isAdmin) ? 'Admin Only' : 'Locked';
+          sqlBadge.className = 'tab-badge badge-locked';
+          document.getElementById('sql-enabled-view').style.display = 'none';
+          document.getElementById('sql-disabled-view').style.display = 'flex';
+          const disMsg = document.querySelector('#sql-disabled-view p');
+          if (disMsg) {
+            disMsg.textContent = (appMeta.flags.enable_sql && !isAdmin)
+              ? 'SQL query console requires Administrator credentials. Sign in as admin to access.'
+              : 'Direct SQL execution is disabled. Set DYNAGO_ENABLE_SQL=true to activate.';
+          }
+        }
+
+        const expBadge = document.getElementById('badge-explorer');
+        if (appMeta.flags.enable_data_view) {
+          expBadge.textContent = 'Enabled';
+          expBadge.className = 'tab-badge badge-active';
+          document.getElementById('explorer-enabled-view').style.display = 'flex';
+          document.getElementById('explorer-disabled-view').style.display = 'none';
+        } else {
+          expBadge.textContent = 'Locked';
+          expBadge.className = 'tab-badge badge-locked';
+          document.getElementById('explorer-enabled-view').style.display = 'none';
+          document.getElementById('explorer-disabled-view').style.display = 'flex';
+        }
+
+        const rbacBadge = document.getElementById('badge-rbac');
+        if (rbacBadge) {
+          if (appMeta.flags.auth_enabled) {
+            rbacBadge.textContent = 'Active';
+            rbacBadge.className = 'tab-badge badge-active';
+          } else {
+            rbacBadge.textContent = 'Off';
+            rbacBadge.className = 'tab-badge badge-locked';
+          }
+        }
+
+        renderTableList();
+        renderExplorerSelect();
+        renderStreamSelect();
+
+        // Select first table by default
+        if (appMeta.tables.length > 0) {
+          selectTable(appMeta.tables[0].name);
+        } else {
+          selectedTable = null;
+          const detail = document.getElementById('detailPanel');
+          if (detail) {
+            detail.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 20px;">No accessible tables found. Sign in with appropriate permissions or configure public tables.</div>';
+          }
+        }
+      } catch (err) {
+        showToast('Error connecting to Dynago: ' + err.message);
+      }
+    }
+
+    function updateAuthUI() {
+      const btn = document.getElementById('btnAuth');
+      const dot = document.getElementById('authStatusDot');
+      const text = document.getElementById('authStatusText');
+      const token = localStorage.getItem('dynago_jwt_token');
+
+      const btnStream = document.getElementById('tabBtnStream');
+      const btnSql = document.getElementById('tabBtnSql');
+      const btnRbac = document.getElementById('tabBtnRbac');
+      const navSec = document.getElementById('navSectionSecured');
+
+      if (!appMeta || !appMeta.flags.auth_enabled) {
+        btn.className = 'btn-auth';
+        dot.className = 'status-dot dot-gray';
+        text.textContent = 'Auth Off';
+        if (btnStream) btnStream.style.display = 'flex';
+        if (btnSql) btnSql.style.display = appMeta?.flags?.enable_sql ? 'flex' : 'none';
+        if (btnRbac) btnRbac.style.display = 'flex';
+        if (navSec) navSec.style.display = 'block';
+        return;
+      }
+
+      if (token) {
+        const u = localStorage.getItem('dynago_user_name') || 'user';
+        const r = localStorage.getItem('dynago_user_role') || 'viewer';
+        btn.className = 'btn-auth logged-in';
+        dot.className = 'status-dot';
+        text.textContent = u + ' (' + r + ')';
+        const uEl = document.getElementById('loggedInUsername');
+        const rEl = document.getElementById('loggedInRole');
+        if (uEl) uEl.textContent = u;
+        if (rEl) rEl.textContent = r;
+
+        if (btnStream) btnStream.style.display = 'flex';
+
+        if (r === 'admin') {
+          if (btnSql) btnSql.style.display = appMeta.flags.enable_sql ? 'flex' : 'none';
+          if (btnRbac) btnRbac.style.display = 'flex';
+        } else {
+          if (btnSql) btnSql.style.display = 'none';
+          if (btnRbac) btnRbac.style.display = 'none';
+        }
+        if (navSec) navSec.style.display = 'block';
+      } else {
+        btn.className = 'btn-auth auth-required';
+        dot.className = 'status-dot dot-warning';
+        text.textContent = 'Sign In';
+
+        // NOT LOGGED IN: Real-time stream, SQL, and RBAC are completely hidden
+        if (btnStream) btnStream.style.display = 'none';
+        if (btnSql) btnSql.style.display = 'none';
+        if (btnRbac) btnRbac.style.display = 'none';
+        if (navSec) navSec.style.display = 'none';
+
+        // Return to endpoints if on a hidden tab
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && (activeTab.id === 'tab-stream' || activeTab.id === 'tab-sql' || activeTab.id === 'tab-rbac')) {
+          switchTab('endpoints');
+        }
+      }
+    }
+
+    let currentAuthMode = 'login';
+    function switchAuthMode(mode) {
+      currentAuthMode = mode;
+      const tabLogin = document.getElementById('authTabBtnLogin');
+      const tabReg = document.getElementById('authTabBtnRegister');
+      const formLogin = document.getElementById('authLoginForm');
+      const formReg = document.getElementById('authRegisterForm');
+      if (!tabLogin || !tabReg) return;
+      if (mode === 'login') {
+        tabLogin.classList.add('active');
+        tabReg.classList.remove('active');
+        if (formLogin) formLogin.style.display = 'flex';
+        if (formReg) formReg.style.display = 'none';
+      } else {
+        tabLogin.classList.remove('active');
+        tabReg.classList.add('active');
+        if (formLogin) formLogin.style.display = 'none';
+        if (formReg) formReg.style.display = 'flex';
+      }
+    }
+
+    function openAuthModal() {
+      const modal = document.getElementById('authModal');
+      const notice = document.getElementById('authNotice');
+      const loginForm = document.getElementById('authLoginForm');
+      const regForm = document.getElementById('authRegisterForm');
+      const tabsNav = document.getElementById('authTabsNav');
+      const loggedInState = document.getElementById('authLoggedInState');
+      const token = localStorage.getItem('dynago_jwt_token');
+
+      modal.style.display = 'flex';
+
+      if (!appMeta || !appMeta.flags.auth_enabled) {
+        notice.innerHTML = '<span style="color:#9ca3af;">Authentication is currently disabled because <code>DYNAGO_JWT_SECRET</code> is not set in your <code>.env</code> file.</span>';
+        if (tabsNav) tabsNav.style.display = 'none';
+        if (loginForm) loginForm.style.display = 'none';
+        if (regForm) regForm.style.display = 'none';
+        if (loggedInState) loggedInState.style.display = 'none';
+        return;
+      }
+
+      if (token) {
+        notice.textContent = 'You are currently authenticated with a valid JWT token. All requests from this browser session will include your Bearer token automatically.';
+        if (tabsNav) tabsNav.style.display = 'none';
+        if (loginForm) loginForm.style.display = 'none';
+        if (regForm) regForm.style.display = 'none';
+        if (loggedInState) loggedInState.style.display = 'flex';
+        document.getElementById('currentJWTBox').textContent = 'Bearer ' + token;
+      } else {
+        notice.textContent = 'Authentication is enabled. Sign in or create an account to access restricted endpoints, custom functions, and schema views.';
+        if (tabsNav) tabsNav.style.display = 'flex';
+        if (loggedInState) loggedInState.style.display = 'none';
+        switchAuthMode(currentAuthMode || 'login');
+      }
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').style.display = 'none';
+    }
+
+    async function submitLogin() {
+      const u = document.getElementById('authUsername').value.trim();
+      const p = document.getElementById('authPassword').value;
+
+      try {
+        const res = await fetch('/api/v1/_auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          showToast('Login failed: ' + (data.error || 'Invalid credentials'));
+          return;
+        }
+
+        localStorage.setItem('dynago_jwt_token', data.token);
+        if (data.user) {
+          localStorage.setItem('dynago_user_name', data.user.username);
+          localStorage.setItem('dynago_user_role', data.user.role);
+        }
+        updateAuthUI();
+        showToast('Logged in successfully as ' + data.user.username + ' (' + data.user.role + ')');
+        closeAuthModal();
+        await init();
+        const rbacTab = document.getElementById('tab-rbac');
+        if (rbacTab && rbacTab.classList.contains('active')) {
+          loadRBACData();
+        }
+      } catch (err) {
+        showToast('Login request error: ' + err.message);
+      }
+    }
+
+    async function submitRegister() {
+      const u = document.getElementById('regUsername').value.trim();
+      const p = document.getElementById('regPassword').value;
+      const cp = document.getElementById('regConfirmPassword').value;
+
+      if (!u || !p) {
+        showToast('Please enter both username and password.');
+        return;
+      }
+      if (p !== cp) {
+        showToast('Passwords do not match.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/_auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          showToast('Registration failed: ' + (data.error || 'Server error'));
+          return;
+        }
+
+        localStorage.setItem('dynago_jwt_token', data.token);
+        if (data.user) {
+          localStorage.setItem('dynago_user_name', data.user.username);
+          localStorage.setItem('dynago_user_role', data.user.role);
+        }
+        updateAuthUI();
+        showToast('Account created and signed in as ' + data.user.username + ' (' + data.user.role + ')');
+        closeAuthModal();
+        await init();
+        const rbacTab = document.getElementById('tab-rbac');
+        if (rbacTab && rbacTab.classList.contains('active')) {
+          loadRBACData();
+        }
+      } catch (err) {
+        showToast('Registration request error: ' + err.message);
+      }
+    }
+
+    async function logoutUser() {
+      localStorage.removeItem('dynago_jwt_token');
+      localStorage.removeItem('dynago_user_name');
+      localStorage.removeItem('dynago_user_role');
+      updateAuthUI();
+      showToast('Logged out.');
+      closeAuthModal();
+      await init();
+      const rbacTab = document.getElementById('tab-rbac');
+      if (rbacTab && rbacTab.classList.contains('active')) {
+        loadRBACData();
+      }
+    }
+
+    function copyToken() {
+      const token = localStorage.getItem('dynago_jwt_token');
+      if (token) {
+        navigator.clipboard.writeText(token);
+        showToast('Token copied to clipboard.');
+      }
+    }
+
+    function switchTab(tab) {
+      const token = localStorage.getItem('dynago_jwt_token');
+
+      // Guard: unauthenticated callers cannot view live stream when auth is enabled
+      if (tab === 'stream' && appMeta && appMeta.flags.auth_enabled && !token) {
+        showToast('Sign in required to view real-time event stream.');
+        openAuthModal();
+        switchTab('endpoints');
+        return;
+      }
+      if (tab === 'sql' && appMeta && appMeta.flags.auth_enabled) {
+        const role = localStorage.getItem('dynago_user_role');
+        if (role !== 'admin') {
+          showToast('Administrator privileges required for SQL Console.');
+          openAuthModal();
+          switchTab('endpoints');
+          return;
+        }
+      }
+      if (tab === 'rbac' && appMeta && appMeta.flags.auth_enabled) {
+        const role = localStorage.getItem('dynago_user_role');
+        if (role !== 'admin') {
+          showToast('Administrator privileges required for User Management.');
+          openAuthModal();
+          switchTab('endpoints');
+          return;
+        }
+      }
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      const target = document.getElementById('tab-' + tab);
+      if (target) target.classList.add('active');
+
+      const btn = document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      if (btn) btn.classList.add('active');
+
+      if (tab === 'sql') {
+        setupSQLSnippets();
+      } else if (tab === 'explorer') {
+        if (!selectedTable && appMeta && appMeta.tables.length > 0) {
+          onExplorerTableChange();
+        } else {
+          loadExplorerData(1);
+        }
+      } else if (tab === 'rbac') {
+        loadRBACData();
+      } else if (tab === 'stream') {
+        renderStreamSelect();
+      } else if (tab === 'functions') {
+        loadFunctionsData();
+      }
+    }
+
+    // --- Custom Functions & RPC ---
+    let functionsData = { wasm_functions: [], database_functions: [] };
+    let selectedFunction = null;
+
+    async function loadFunctionsData() {
+      const list = document.getElementById('functionsList');
+      const countBadge = document.getElementById('functionsTotalCount');
+      if (!list) return;
+
+      list.innerHTML = '<div style="font-size:12px; color:var(--text-dim); padding:10px; text-align:center;">Loading functions catalog...</div>';
+
+      try {
+        const res = await fetch('/api/v1/functions', { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error('API returned ' + res.status);
+        functionsData = await res.json();
+        
+        const total = (functionsData.wasm_functions?.length || 0) + (functionsData.database_functions?.length || 0);
+        if (countBadge) countBadge.textContent = total;
+
+        list.innerHTML = '';
+        if (total === 0) {
+          list.innerHTML = '<div style="font-size:12px; color:var(--text-dim); padding:14px; text-align:center;">No custom functions found. Place .wasm files in ./plugins or add stored functions in PostgreSQL.</div>';
+          return;
+        }
+
+        // Section: Wasm Functions
+        if (functionsData.wasm_functions && functionsData.wasm_functions.length > 0) {
+          const header = document.createElement('div');
+          header.style.cssText = 'font-size:10px; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px; margin:8px 0 4px 4px;';
+          header.textContent = 'WebAssembly Routes (' + functionsData.wasm_functions.length + ')';
+          list.appendChild(header);
+
+          functionsData.wasm_functions.forEach(fn => {
+            const item = createFunctionListItem(fn);
+            list.appendChild(item);
+          });
+        }
+
+        // Section: Database RPC Functions
+        if (functionsData.database_functions && functionsData.database_functions.length > 0) {
+          const header = document.createElement('div');
+          header.style.cssText = 'font-size:10px; font-weight:700; color:#a78bfa; text-transform:uppercase; letter-spacing:0.5px; margin:12px 0 4px 4px;';
+          header.textContent = 'PostgreSQL RPC Functions (' + functionsData.database_functions.length + ')';
+          list.appendChild(header);
+
+          functionsData.database_functions.forEach(fn => {
+            const item = createFunctionListItem(fn);
+            list.appendChild(item);
+          });
+        }
+
+        // Auto-select first function
+        if (!selectedFunction) {
+          if (functionsData.wasm_functions?.length > 0) {
+            selectFunction(functionsData.wasm_functions[0]);
+          } else if (functionsData.database_functions?.length > 0) {
+            selectFunction(functionsData.database_functions[0]);
+          }
+        }
+      } catch (err) {
+        list.innerHTML = `<div style="color:#f87171; font-size:12px; padding:10px;">Failed to load functions: ${err.message}</div>`;
+      }
+    }
+
+    function createFunctionListItem(fn) {
+      const item = document.createElement('div');
+      item.className = 'table-item';
+      item.style.padding = '8px 10px';
+      if (selectedFunction && selectedFunction.name === fn.name && selectedFunction.type === fn.type) {
+        item.classList.add('active');
+      }
+
+      const isWasm = fn.type === 'wasm';
+      const badgeColor = isWasm ? '#38bdf8' : '#a78bfa';
+      const badgeBg = isWasm ? 'rgba(56,189,248,0.12)' : 'rgba(167,139,250,0.12)';
+      const typeLabel = isWasm ? 'WASM' : 'POSTGRES';
+
+      const isPublic = fn.is_public === true;
+      const visColor = isPublic ? '#4ade80' : '#fbbf24';
+      const visBg = isPublic ? 'rgba(74,222,128,0.12)' : 'rgba(251,191,36,0.12)';
+      const visLabel = isPublic ? 'PUBLIC' : 'PRIVATE';
+
+      item.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+          <span style="font-weight:600; font-size:12px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${fn.name}</span>
+          <div style="display:flex; gap:4px; align-items:center;">
+            <span style="font-size:9px; font-weight:700; color:${visColor}; background:${visBg}; padding:2px 5px; border-radius:3px; letter-spacing:0.4px;">${visLabel}</span>
+            <span style="font-size:9px; font-weight:700; color:${badgeColor}; background:${badgeBg}; padding:2px 5px; border-radius:3px; letter-spacing:0.4px;">${typeLabel}</span>
+          </div>
+        </div>
+      `;
+      item.onclick = () => selectFunction(fn);
+      return item;
+    }
+
+    function selectFunction(fn) {
+      selectedFunction = fn;
+      document.querySelectorAll('#functionsList .table-item').forEach(el => el.classList.remove('active'));
+
+      const items = document.querySelectorAll('#functionsList .table-item');
+      items.forEach(el => {
+        if (el.textContent.includes(fn.name)) el.classList.add('active');
+      });
+
+      document.getElementById('fnActiveTitle').textContent = fn.name;
+      document.getElementById('fnActiveDescription').textContent = fn.description || (fn.type === 'wasm' ? 'Wasm sandboxed virtual route' : 'PostgreSQL stored procedure');
+      
+      const badge = document.getElementById('fnActiveTypeBadge');
+      badge.style.display = 'inline-block';
+      badge.textContent = fn.type.toUpperCase();
+      badge.style.color = fn.type === 'wasm' ? '#38bdf8' : '#a78bfa';
+
+      const visBadge = document.getElementById('fnActiveVisibilityBadge');
+      if (visBadge) {
+        visBadge.style.display = 'inline-block';
+        const isPub = fn.is_public === true;
+        visBadge.textContent = isPub ? 'PUBLIC' : 'PRIVATE';
+        visBadge.style.color = isPub ? '#4ade80' : '#fbbf24';
+        visBadge.style.background = isPub ? 'rgba(74,222,128,0.12)' : 'rgba(251,191,36,0.12)';
+      }
+
+      const toggleBtn = document.getElementById('btnToggleFunctionVisibility');
+      if (toggleBtn) {
+        const role = localStorage.getItem('dynago_user_role') || '';
+        const authOff = !appMeta || !appMeta.flags.auth_enabled;
+        if (authOff || role === 'admin') {
+          toggleBtn.style.display = 'inline-block';
+          toggleBtn.textContent = fn.is_public ? 'Make Private' : 'Make Public';
+        } else {
+          toggleBtn.style.display = 'none';
+        }
+      }
+
+      const urlPreview = document.getElementById('fnEndpointUrl');
+      urlPreview.textContent = 'POST ' + fn.endpoint;
+
+      const sigRow = document.getElementById('fnSignatureRow');
+      const sigText = document.getElementById('fnSignatureText');
+      if (fn.arguments) {
+        sigRow.style.display = 'block';
+        sigText.textContent = fn.name + '(' + fn.arguments + ')' + (fn.return_type ? ' -> ' + fn.return_type : '');
+      } else {
+        sigRow.style.display = 'none';
+      }
+
+      // Pre-fill sensible payload template
+      const inputArea = document.getElementById('fnInputBody');
+      if (fn.arguments) {
+        const rawParts = fn.arguments.split(',').map(s => s.trim()).filter(Boolean);
+        const sample = {};
+        rawParts.forEach(part => {
+          const tokens = part.split(/\s+/);
+          const pName = tokens[0] || 'param';
+          const pType = (tokens[1] || '').toLowerCase();
+          const pLower = pName.toLowerCase();
+
+          if (pLower.includes('order') || pLower.includes('id') || pType.includes('int') || pType.includes('serial')) {
+            sample[pName] = 1;
+          } else if (pLower.includes('status')) {
+            sample[pName] = 'completed';
+          } else if (pLower.includes('discount') || pLower.includes('percent') || pLower.includes('rate')) {
+            sample[pName] = 15;
+          } else if (pLower.includes('price') || pLower.includes('amount') || pLower.includes('total') || pLower.includes('cost') || pType.includes('numeric') || pType.includes('decimal') || pType.includes('float')) {
+            sample[pName] = 149.99;
+          } else if (pLower.includes('count') || pLower.includes('qty') || pLower.includes('quantity') || pLower.includes('limit')) {
+            sample[pName] = 5;
+          } else if (pLower.includes('email')) {
+            sample[pName] = 'customer@example.com';
+          } else if (pType.includes('bool')) {
+            sample[pName] = true;
+          } else if (pType.includes('json')) {
+            sample[pName] = {};
+          } else {
+            sample[pName] = 'sample_' + pName;
+          }
+        });
+        inputArea.value = JSON.stringify(sample, null, 2);
+      } else if (fn.name === 'currency_convert') {
+        inputArea.value = JSON.stringify({ amount: 100, from: 'USD', to: 'EUR' }, null, 2);
+      } else {
+        inputArea.value = '{\n  \n}';
+      }
+
+      document.getElementById('fnOutputBox').textContent = '(Click Execute Function above to run)';
+      document.getElementById('fnExecDuration').textContent = '';
+    }
+
+    async function toggleSelectedFunctionVisibility() {
+      if (!selectedFunction) return;
+      const newPublic = !selectedFunction.is_public;
+      try {
+        const res = await fetch('/api/v1/_auth/functions/' + encodeURIComponent(selectedFunction.name), {
+          method: 'PUT',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ is_public: newPublic })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast('Failed to update visibility: ' + (data.error || res.status));
+          return;
+        }
+        selectedFunction.is_public = newPublic;
+        showToast('Function ' + selectedFunction.name + ' is now ' + (newPublic ? 'Public' : 'Private') + '.');
+        await loadFunctionsData();
+        selectFunction(selectedFunction);
+      } catch (err) {
+        showToast('Request error: ' + err.message);
+      }
+    }
+
+    function formatFunctionInput() {
+      const area = document.getElementById('fnInputBody');
+      try {
+        const val = JSON.parse(area.value);
+        area.value = JSON.stringify(val, null, 2);
+      } catch (e) {
+        showToast('Invalid JSON: ' + e.message);
+      }
+    }
+
+    function clearFunctionOutput() {
+      document.getElementById('fnOutputBox').textContent = '(Cleared)';
+      document.getElementById('fnExecDuration').textContent = '';
+    }
+
+    async function invokeFunction() {
+      if (!selectedFunction) {
+        showToast('Please select a function first.');
+        return;
+      }
+
+      const inputVal = document.getElementById('fnInputBody').value.trim();
+      let payload = {};
+      if (inputVal) {
+        try {
+          payload = JSON.parse(inputVal);
+        } catch (e) {
+          showToast('Invalid JSON input: ' + e.message);
+          return;
+        }
+      }
+
+      const outBox = document.getElementById('fnOutputBox');
+      const timeSpan = document.getElementById('fnExecDuration');
+      const btn = document.getElementById('btnExecuteFunction');
+
+      btn.disabled = true;
+      btn.textContent = 'Running...';
+      outBox.textContent = 'Executing function...';
+
+      const start = performance.now();
+      try {
+        const res = await fetch(selectedFunction.endpoint, {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload),
+        });
+
+        const elapsed = (performance.now() - start).toFixed(1);
+        timeSpan.textContent = elapsed + ' ms | HTTP ' + res.status;
+
+        const data = await res.json();
+        outBox.textContent = JSON.stringify(data, null, 2);
+
+        if (res.ok) {
+          showToast(`Executed ${selectedFunction.name} successfully.`);
+        } else {
+          showToast(`Function error: HTTP ${res.status}`);
+        }
+      } catch (err) {
+        const elapsed = (performance.now() - start).toFixed(1);
+        timeSpan.textContent = elapsed + ' ms';
+        outBox.textContent = 'Request failed: ' + err.message;
+        showToast('Execution error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Execute Function';
+      }
+    }
+
+    // --- RBAC Data & Actions ---
+    let rbacUsers = [];
+    let rbacPerms = [];
+
+    async function loadRBACData() {
+      const disabledView = document.getElementById('rbac-disabled-view');
+      const authReqView = document.getElementById('rbac-auth-required-view');
+      const enabledView = document.getElementById('rbac-enabled-view');
+
+      if (!appMeta || !appMeta.flags.auth_enabled) {
+        disabledView.style.display = 'flex';
+        authReqView.style.display = 'none';
+        enabledView.style.display = 'none';
+        return;
+      }
+
+      const token = localStorage.getItem('dynago_jwt_token');
+      if (!token) {
+        disabledView.style.display = 'none';
+        authReqView.style.display = 'flex';
+        enabledView.style.display = 'none';
+        return;
+      }
+
+      disabledView.style.display = 'none';
+      authReqView.style.display = 'none';
+      enabledView.style.display = 'flex';
+
+      try {
+        const [uRes, pRes] = await Promise.all([
+          fetch('/api/v1/_auth/users', { headers: getAuthHeaders() }),
+          fetch('/api/v1/_auth/permissions', { headers: getAuthHeaders() })
+        ]);
+
+        if (uRes.status === 401 || uRes.status === 403) {
+          authReqView.style.display = 'flex';
+          enabledView.style.display = 'none';
+          showToast('Admin privileges required to manage RBAC.');
+          return;
+        }
+
+        rbacUsers = await uRes.json();
+        const pData = await pRes.json();
+        rbacPerms = pData.permissions || [];
+        if (pData.table_visibility && appMeta && appMeta.tables) {
+          appMeta.tables.forEach(t => {
+            if (pData.table_visibility[t.name] !== undefined) {
+              t.is_public = pData.table_visibility[t.name];
+            }
+          });
+        }
+
+        renderUsersList();
+        renderPermissionsMatrix();
+      } catch (err) {
+        showToast('Error loading RBAC: ' + err.message);
+      }
+    }
+
+    function renderUsersList() {
+      const tbody = document.getElementById('usersTableBody');
+      const badge = document.getElementById('userCountBadge');
+      if (!tbody) return;
+
+      badge.textContent = (rbacUsers ? rbacUsers.length : 0) + ' users';
+      if (!rbacUsers || rbacUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:14px; color:var(--text-muted);">No users found.</td></tr>';
+        return;
+      }
+
+      const currentUsername = (localStorage.getItem('dynago_user_name') || '').toLowerCase();
+
+      tbody.innerHTML = rbacUsers.map(u => {
+        const uLower = (u.username || '').toLowerCase();
+        const isSelf = uLower === currentUsername;
+        const isAdmin = u.role === 'admin';
+        const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString() : '';
+        const roleClass = 'role-' + (u.role || 'viewer');
+        const isActive = u.is_active !== false;
+
+        let roleHtml = '';
+        if (isAdmin || isSelf) {
+          roleHtml = `<span class="role-badge ${roleClass}">${u.role}</span>`;
+        } else {
+          roleHtml = `
+            <select class="custom-select" style="font-size:11px; padding:2px 6px;" onchange="handleUpdateUserRole('${u.username}', this.value)">
+              <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>viewer</option>
+              <option value="editor" ${u.role === 'editor' ? 'selected' : ''}>editor</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>admin</option>
+            </select>
+          `;
+        }
+
+        let statusHtml = '';
+        if (isAdmin || isSelf) {
+          statusHtml = `<span style="font-size:11px; color:#4ade80; font-weight:600;">Active</span>`;
+        } else {
+          const statusColor = isActive ? '#4ade80' : '#f87171';
+          const statusBorder = isActive ? '#166534' : '#7f1d1d';
+          const statusBg = isActive ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)';
+          statusHtml = `
+            <button class="chip-btn" style="font-size:10px; padding:2px 7px; color:${statusColor}; border-color:${statusBorder}; background:${statusBg}; cursor:pointer;" onclick="handleToggleUserStatus('${u.username}', ${!isActive})">
+              ${isActive ? 'Active' : 'Disabled'}
+            </button>
+          `;
+        }
+
+        let actionHtml = '';
+        if (isSelf) {
+          actionHtml = '<span style="font-size:11px; color:var(--text-dim);">You</span>';
+        } else if (isAdmin) {
+          actionHtml = '<span class="tab-badge" style="color:#93c5fd; border-color:#1e3a5f;">Protected</span>';
+        } else {
+          actionHtml = `<button class="chip-btn" style="color:#f87171; border-color:#7f1d1d; font-size:11px; padding:2px 7px; cursor:pointer;" onclick="handleDeleteUser('${u.username}')">Delete</button>`;
+        }
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight:600; color:#fff;">${u.username}</div>
+              <div style="font-size:10px; color:var(--text-dim);">${dateStr}</div>
+            </td>
+            <td>${roleHtml}</td>
+            <td>${statusHtml}</td>
+            <td>${actionHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function handleUpdateUserRole(username, newRole) {
+      try {
+        const res = await fetch('/api/v1/_auth/users/' + encodeURIComponent(username), {
+          method: 'PATCH',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ role: newRole })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast('Failed to update role: ' + (data.error || res.statusText));
+          loadRBACData();
+          return;
+        }
+        showToast('Updated ' + username + ' role to ' + newRole + '.');
+        loadRBACData();
+      } catch (err) {
+        showToast('Error updating role: ' + err.message);
+        loadRBACData();
+      }
+    }
+
+    async function handleToggleUserStatus(username, newActive) {
+      try {
+        const res = await fetch('/api/v1/_auth/users/' + encodeURIComponent(username), {
+          method: 'PATCH',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ is_active: newActive })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast('Failed to update status: ' + (data.error || res.statusText));
+          loadRBACData();
+          return;
+        }
+        showToast('User ' + username + (newActive ? ' enabled.' : ' disabled.'));
+        loadRBACData();
+      } catch (err) {
+        showToast('Error updating status: ' + err.message);
+        loadRBACData();
+      }
+    }
+
+    async function handleCreateUserSubmit() {
+      const u = document.getElementById('newUsername').value.trim();
+      const p = document.getElementById('newPassword').value;
+      const r = document.getElementById('newUserRole').value;
+
+      if (!u || !p) {
+        showToast('Username and password are required.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/_auth/users', {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ username: u, password: p, role: r })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast('Failed to create user: ' + (data.error || res.statusText));
+          return;
+        }
+        showToast('User ' + u + ' created successfully.');
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newPassword').value = '';
+        loadRBACData();
+      } catch (err) {
+        showToast('Error creating user: ' + err.message);
+      }
+    }
+
+    async function handleDeleteUser(username) {
+      if (!confirm(`Delete user "${username}"?`)) return;
+
+      try {
+        const res = await fetch('/api/v1/_auth/users/' + encodeURIComponent(username), {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast('Failed to delete user: ' + (data.error || res.statusText));
+          return;
+        }
+        showToast('User ' + username + ' deleted.');
+        loadRBACData();
+      } catch (err) {
+        showToast('Error deleting user: ' + err.message);
+      }
+    }
+
+    function renderPermissionsMatrix() {
+      const role = document.getElementById('permRoleSelect').value;
+      const tbody = document.getElementById('permsTableBody');
+      if (!tbody || !appMeta) return;
+
+      tbody.innerHTML = appMeta.tables.map(tbl => {
+        const perm = rbacPerms.find(p => p.role === role && p.table_name === tbl.name) || {};
+        
+        let defRead = true;
+        let defInsert = false;
+        let defUpdate = false;
+        let defDelete = false;
+
+        if (role === 'anon') {
+          defRead = tbl.is_public === true;
+          defInsert = false;
+          defUpdate = false;
+          defDelete = false;
+        }
+
+        const canRead = perm.can_read !== undefined ? perm.can_read : defRead;
+        const canInsert = perm.can_insert !== undefined ? perm.can_insert : defInsert;
+        const canUpdate = perm.can_update !== undefined ? perm.can_update : defUpdate;
+        const canDelete = perm.can_delete !== undefined ? perm.can_delete : defDelete;
+
+        const isPub = tbl.is_public === true;
+        const visColor = isPub ? '#4ade80' : '#fbbf24';
+        const visBg = isPub ? 'rgba(74,222,128,0.12)' : 'rgba(251,191,36,0.12)';
+        const visLabel = isPub ? 'PUBLIC' : 'PRIVATE';
+
+        return `
+          <tr>
+            <td>
+              <strong style="color:#fff;">${tbl.name}</strong>
+              <span style="font-size:11px; color:var(--text-dim); margin-left:6px;">(${tbl.columns.length} cols)</span>
+            </td>
+            <td style="text-align:center;">
+              <button class="chip-btn" style="font-size:10px; padding:2px 7px; color:${visColor}; background:${visBg}; font-weight:700; border-color:${visColor}; cursor:pointer;" onclick="toggleTableVisibility('${tbl.name}')">
+                ${visLabel}
+              </button>
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" class="perm-checkbox" ${canRead ? 'checked' : ''} onchange="toggleTablePermission('${role}', '${tbl.name}', 'read', this.checked)">
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" class="perm-checkbox" ${canInsert ? 'checked' : ''} onchange="toggleTablePermission('${role}', '${tbl.name}', 'insert', this.checked)">
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" class="perm-checkbox" ${canUpdate ? 'checked' : ''} onchange="toggleTablePermission('${role}', '${tbl.name}', 'update', this.checked)">
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" class="perm-checkbox" ${canDelete ? 'checked' : ''} onchange="toggleTablePermission('${role}', '${tbl.name}', 'delete', this.checked)">
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function toggleTablePermission(role, tableName, op, checked) {
+      let perm = rbacPerms.find(p => p.role === role && p.table_name === tableName);
+      if (!perm) {
+        perm = {
+          role: role,
+          table_name: tableName,
+          can_read: true,
+          can_insert: false,
+          can_update: false,
+          can_delete: false
+        };
+        rbacPerms.push(perm);
+      }
+
+      if (op === 'read') perm.can_read = checked;
+      if (op === 'insert') perm.can_insert = checked;
+      if (op === 'update') perm.can_update = checked;
+      if (op === 'delete') perm.can_delete = checked;
+
+      try {
+        const res = await fetch('/api/v1/_auth/permissions', {
+          method: 'PUT',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(perm)
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast('Permission save error: ' + (data.error || res.statusText));
+          return;
+        }
+        showToast(`Saved: ${role} on ${tableName} (${op} = ${checked})`);
+      } catch (err) {
+        showToast('Error saving permission: ' + err.message);
+      }
+    }
+
+    async function toggleTableVisibility(tableName) {
+      const tbl = appMeta.tables.find(t => t.name === tableName);
+      if (!tbl) return;
+      const newPub = !tbl.is_public;
+      try {
+        const res = await fetch('/api/v1/_auth/tables/' + encodeURIComponent(tableName), {
+          method: 'PUT',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ is_public: newPub })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast('Failed to update table visibility: ' + (data.error || res.status));
+          return;
+        }
+        tbl.is_public = newPub;
+        showToast('Table ' + tableName + ' is now ' + (newPub ? 'Public' : 'Private') + '.');
+        renderTableList();
+        if (selectedTable === tableName) {
+          selectTable(tableName);
+        }
+        const rbacTab = document.getElementById('tab-rbac');
+        if (rbacTab && rbacTab.classList.contains('active')) {
+          renderPermissionsMatrix();
+        }
+      } catch (err) {
+        showToast('Request error: ' + err.message);
+      }
+    }
+
+    function renderTableList() {
+      const list = document.getElementById('tableList');
+      list.innerHTML = '';
+      appMeta.tables.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'table-item' + (selectedTable === t.name ? ' active' : '');
+        item.id = 'table-item-' + t.name;
+        item.onclick = () => selectTable(t.name);
+        const isPub = t.is_public === true;
+        const visColor = isPub ? '#4ade80' : '#fbbf24';
+        const visBg = isPub ? 'rgba(74,222,128,0.12)' : 'rgba(251,191,36,0.12)';
+        const visLabel = isPub ? 'PUBLIC' : 'PRIVATE';
+        item.innerHTML = `
+          <span>${t.name}</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span style="font-size:9px; font-weight:700; color:${visColor}; background:${visBg}; padding:2px 5px; border-radius:3px; letter-spacing:0.4px;">${visLabel}</span>
+            <span style="font-size:11px; opacity:0.6;">${t.columns.length} cols</span>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function filterTables() {
+      const q = document.getElementById('tableSearch').value.toLowerCase();
+      appMeta.tables.forEach(t => {
+        const el = document.getElementById('table-item-' + t.name);
+        if (el) {
+          el.style.display = t.name.toLowerCase().includes(q) ? 'flex' : 'none';
+        }
+      });
+    }
+
+    function selectTable(name) {
+      selectedTable = name;
+      document.querySelectorAll('.table-item').forEach(el => el.classList.remove('active'));
+      const activeEl = document.getElementById('table-item-' + name);
+      if (activeEl) activeEl.classList.add('active');
+
+      const tbl = appMeta.tables.find(t => t.name === name);
+      if (!tbl) return;
+
+      const isPub = tbl.is_public === true;
+      const visColor = isPub ? '#4ade80' : '#fbbf24';
+      const visBg = isPub ? 'rgba(74,222,128,0.12)' : 'rgba(251,191,36,0.12)';
+      const visLabel = isPub ? 'PUBLIC' : 'PRIVATE';
+
+      const panel = document.getElementById('detailPanel');
+      panel.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--card-border); padding-bottom:14px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h1 style="font-size:20px; font-weight:700;">${tbl.name}</h1>
+              <span class="status-pill" style="font-size:10px; padding:2px 6px; color:${visColor}; background:${visBg}; font-weight:700;">${visLabel}</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Schema: <strong>${tbl.schema}</strong> | Primary Key: <strong>${tbl.primary_keys.join(', ') || 'none'}</strong> | Columns: <strong>${tbl.columns.length}</strong>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="chip-btn" style="font-size:12px;" onclick="toggleTableVisibility('${tbl.name}')">
+              ${isPub ? 'Make Private' : 'Make Public'}
+            </button>
+            <button class="btn-run" style="font-size:12px;" onclick="viewTableInDataExplorer('${tbl.name}')">
+              View Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Endpoints List -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <h3 style="font-size:14px; font-weight:600; color:#fff;">Auto-Generated Endpoints</h3>
+
+          <!-- GET /api/v1/{table} -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <span class="method-pill m-get">GET</span>
+              <span class="endpoint-path">/api/v1/${tbl.name}</span>
+              <span class="endpoint-desc">Query, filter, paginate records</span>
+            </div>
+            <div class="endpoint-body">
+              <div style="font-size:12px; color:var(--text-muted);">
+                Parameters: <code>select</code>, <code>order=col.asc|desc</code>, <code>limit=n</code>, <code>offset=n</code>, filters: <code>col=eq.val</code>, <code>col=gt.val</code>, <code>col=like.val</code>
+              </div>
+              <div>
+                <div style="font-size:11px; font-weight:600; margin-bottom:4px; color:var(--text-muted);">Example Response:</div>
+                <div class="json-box">
+                  <button class="copy-btn" onclick="copyJSON(this, 'get-json-${tbl.name}')">Copy</button>
+                  <pre id="get-json-${tbl.name}">${JSON.stringify(tbl.examples.get_response, null, 2)}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- POST /api/v1/{table} -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <span class="method-pill m-post">POST</span>
+              <span class="endpoint-path">/api/v1/${tbl.name}</span>
+              <span class="endpoint-desc">Insert a new record</span>
+            </div>
+            <div class="endpoint-body">
+              <div>
+                <div style="font-size:11px; font-weight:600; margin-bottom:4px; color:var(--text-muted);">Example Request:</div>
+                <div class="json-box">
+                  <button class="copy-btn" onclick="copyJSON(this, 'post-json-${tbl.name}')">Copy</button>
+                  <pre id="post-json-${tbl.name}">${JSON.stringify(tbl.examples.post_request, null, 2)}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PATCH /api/v1/{table} -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <span class="method-pill m-patch">PATCH</span>
+              <span class="endpoint-path">/api/v1/${tbl.name}?${tbl.primary_keys[0] || 'id'}=eq.1</span>
+              <span class="endpoint-desc">Update record matching filter</span>
+            </div>
+            <div class="endpoint-body">
+              <div>
+                <div style="font-size:11px; font-weight:600; margin-bottom:4px; color:var(--text-muted);">Example Update Payload:</div>
+                <div class="json-box">
+                  <button class="copy-btn" onclick="copyJSON(this, 'patch-json-${tbl.name}')">Copy</button>
+                  <pre id="patch-json-${tbl.name}">${JSON.stringify(tbl.examples.patch_request, null, 2)}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DELETE /api/v1/{table} -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <span class="method-pill m-delete">DELETE</span>
+              <span class="endpoint-path">/api/v1/${tbl.name}?${tbl.primary_keys[0] || 'id'}=eq.1</span>
+              <span class="endpoint-desc">Delete record matching filter</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schema Columns Table -->
+        <div style="margin-top:8px;">
+          <h3 style="font-size:14px; font-weight:600; color:#fff; margin-bottom:10px;">Schema Definitions</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Column</th>
+                  <th>Type</th>
+                  <th>Primary Key</th>
+                  <th>Nullable</th>
+                  <th>Default</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tbl.columns.map(c => `
+                  <tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td><code>${c.type}</code></td>
+                    <td>${c.primary_key ? '<span style="color:#4ade80;font-weight:600;">YES</span>' : '<span style="opacity:0.4;">no</span>'}</td>
+                    <td>${c.nullable ? '<span style="opacity:0.8;">yes</span>' : '<span style="color:#f87171;">no</span>'}</td>
+                    <td><span style="font-size:11px;opacity:0.7;">${c.default || '-'}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function viewTableInDataExplorer(tableName) {
+      selectedTable = tableName;
+      document.getElementById('explorerTableSelect').value = tableName;
+      switchTab('explorer');
+    }
+
+    // --- SQL Console Logic ---
+    function setupSQLSnippets() {
+      const container = document.getElementById('sqlSnippetChips');
+      container.innerHTML = '';
+      const tbl = selectedTable || (appMeta.tables[0] ? appMeta.tables[0].name : 'products');
+      
+      const snippets = [
+        { label: 'Select 10', sql: 'SELECT * FROM ' + tbl + ' LIMIT 10;' },
+        { label: 'Count Rows', sql: 'SELECT count(*) FROM ' + tbl + ';' },
+        { label: 'Show Schema', sql: "SELECT table_name FROM information_schema.tables WHERE table_schema='public';" }
+      ];
+
+      snippets.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'chip-btn';
+        btn.textContent = s.label;
+        btn.onclick = () => {
+          document.getElementById('sqlQueryInput').value = s.sql;
+        };
+        container.appendChild(btn);
+      });
+
+      if (!document.getElementById('sqlQueryInput').value) {
+        document.getElementById('sqlQueryInput').value = 'SELECT * FROM ' + tbl + ' LIMIT 10;';
+      }
+    }
+
+    async function runSQLQuery() {
+      const q = document.getElementById('sqlQueryInput').value.trim();
+      if (!q) return;
+
+      const metaBar = document.getElementById('sqlMetaBar');
+      metaBar.innerHTML = 'Executing query...';
+
+      try {
+        const res = await fetch('/api/v1/_ui/sql', {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ query: q })
+        });
+        const data = await res.json();
+
+        if (res.status === 401) {
+          metaBar.innerHTML = `<span style="color:#f87171;">401 Unauthorized (Bearer token required)</span>`;
+          showToast('Unauthorized: Please sign in.');
+          openAuthModal();
+          return;
+        }
+
+        if (!res.ok || data.error) {
+          metaBar.innerHTML = `<span style="color:#f87171;">Error: ${data.error || 'Execution failed'} (${data.duration_ms || 0}ms)</span>`;
+          document.getElementById('sqlResultsWrapper').style.display = 'none';
+          return;
+        }
+
+        metaBar.innerHTML = `<span style="color:#4ade80;">${data.duration_ms}ms</span> | Rows: <strong>${data.row_count}</strong>`;
+        renderSQLResults(data);
+      } catch (err) {
+        metaBar.innerHTML = `<span style="color:#f87171;">Error: ${err.message}</span>`;
+      }
+    }
+
+    function renderSQLResults(data) {
+      lastSQLData = data;
+      const wrap = document.getElementById('sqlResultsWrapper');
+      const table = document.getElementById('sqlResultsTable');
+      wrap.style.display = 'flex';
+
+      document.getElementById('sqlResultCount').textContent = 
+        `${data.rows ? data.rows.length : 0} rows returned`;
+
+      if (!data.columns || data.columns.length === 0) {
+        table.innerHTML = `<tr><td style="padding:14px;text-align:center;">Command executed: <strong>${data.command_tag || 'OK'}</strong></td></tr>`;
+        return;
+      }
+
+      let thead = '<thead><tr>' + data.columns.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
+      let tbody = '<tbody>';
+      if (data.rows && data.rows.length > 0) {
+        tbody += data.rows.map(r => {
+          return '<tr>' + data.columns.map(c => {
+            const val = r[c];
+            return `<td>${val !== null && val !== undefined ? (typeof val === 'object' ? JSON.stringify(val) : val) : '<span style="opacity:0.3;">null</span>'}</td>`;
+          }).join('') + '</tr>';
+        }).join('');
+      } else {
+        tbody += `<tr><td colspan="${data.columns.length}" style="text-align:center;padding:14px;">(0 rows returned)</td></tr>`;
+      }
+      tbody += '</tbody>';
+      table.innerHTML = thead + tbody;
+    }
+
+    function exportSQLCSV() {
+      if (!lastSQLData || !lastSQLData.rows || lastSQLData.rows.length === 0) return;
+      const cols = lastSQLData.columns;
+      let csv = cols.join(',') + '\n';
+      lastSQLData.rows.forEach(r => {
+        csv += cols.map(c => JSON.stringify(r[c] ?? '')).join(',') + '\n';
+      });
+      downloadFile(csv, 'query_results.csv', 'text/csv');
+    }
+
+    // --- Data Explorer Logic ---
+    function renderExplorerSelect() {
+      const sel = document.getElementById('explorerTableSelect');
+      sel.innerHTML = '';
+      appMeta.tables.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    function onExplorerTableChange() {
+      const sel = document.getElementById('explorerTableSelect');
+      selectedTable = sel.value;
+      const tbl = appMeta.tables.find(t => t.name === selectedTable);
+      
+      const sortSel = document.getElementById('sortColumnSelect');
+      sortSel.innerHTML = '';
+      if (tbl) {
+        tbl.columns.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.name;
+          opt.textContent = c.name + (c.primary_key ? ' (PK)' : '');
+          sortSel.appendChild(opt);
+        });
+      }
+
+      clearFilters();
+      loadExplorerData(1);
+    }
+
+    function addFilterRow() {
+      const tbl = appMeta.tables.find(t => t.name === (selectedTable || document.getElementById('explorerTableSelect').value));
+      if (!tbl) return;
+
+      const list = document.getElementById('filterList');
+      const row = document.createElement('div');
+      row.className = 'filter-row';
+
+      let colOptions = tbl.columns.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      row.innerHTML = `
+        <select class="custom-select f-col">${colOptions}</select>
+        <select class="custom-select f-op">
+          <option value="eq">= equals</option>
+          <option value="neq">!= not equals</option>
+          <option value="gt">&gt; greater than</option>
+          <option value="gte">&gt;= greater or equal</option>
+          <option value="lt">&lt; less than</option>
+          <option value="lte">&lt;= less or equal</option>
+          <option value="like">LIKE contains</option>
+          <option value="ilike">ILIKE ignore case</option>
+        </select>
+        <input type="text" class="custom-input f-val" placeholder="Value...">
+        <button class="btn-remove-filter" onclick="this.parentElement.remove()">Remove</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function clearFilters() {
+      document.getElementById('filterList').innerHTML = '';
+    }
+
+    async function loadExplorerData(page = 1) {
+      const tblName = document.getElementById('explorerTableSelect').value;
+      if (!tblName) return;
+
+      explorerCurrentPage = page;
+      const limit = document.getElementById('limitSelect').value;
+      const sortCol = document.getElementById('sortColumnSelect').value;
+      const sortOrder = document.getElementById('sortOrderSelect').value;
+
+      let params = new URLSearchParams();
+      params.set('limit', limit);
+      params.set('page', page);
+      if (sortCol) {
+        params.set('order', `${sortCol}.${sortOrder}`);
+      }
+
+      document.querySelectorAll('.filter-row').forEach(row => {
+        const col = row.querySelector('.f-col').value;
+        const op = row.querySelector('.f-op').value;
+        const val = row.querySelector('.f-val').value.trim();
+        if (col && op && val) {
+          params.set(col, `${op}.${val}`);
+        }
+      });
+
+      const previewUrl = `/api/v1/${tblName}?${params.toString()}`;
+      document.getElementById('explorerUrlPreview').textContent = `GET ${previewUrl}`;
+
+      try {
+        const res = await fetch(`/api/v1/_ui/data/${tblName}?${params.toString()}`, {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+
+        if (res.status === 401) {
+          showToast('Unauthorized: Bearer token required. Please sign in.');
+          openAuthModal();
+          return;
+        }
+
+        if (!res.ok || data.error) {
+          showToast('Data query error: ' + (data.error || res.statusText));
+          return;
+        }
+
+        renderExplorerGrid(data);
+      } catch (err) {
+        showToast('Error loading data: ' + err.message);
+      }
+    }
+
+    function renderExplorerGrid(data) {
+      const table = document.getElementById('explorerDataTable');
+      
+      const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
+      const end = Math.min(data.page * data.limit, data.total);
+      document.getElementById('paginationInfo').textContent = 
+        `Showing ${start} to ${end} of ${data.total} records`;
+      document.getElementById('pageIndicator').textContent = 
+        `Page ${data.page} of ${data.total_pages}`;
+
+      document.getElementById('btnPrevPage').disabled = data.page <= 1;
+      document.getElementById('btnNextPage').disabled = data.page >= data.total_pages;
+
+      document.getElementById('limitCappedNotice').textContent = 
+        `(Max limit: ${data.data_limit_max})`;
+
+      let thead = '<thead><tr>' + data.columns.map(c => `<th>${c.name} <span style="font-size:10px;opacity:0.5;">(${c.type})</span></th>`).join('') + '</tr></thead>';
+      let tbody = '<tbody>';
+
+      if (data.rows && data.rows.length > 0) {
+        tbody += data.rows.map(row => {
+          return '<tr>' + data.columns.map(c => {
+            const val = row[c.name];
+            return `<td>${val !== null && val !== undefined ? (typeof val === 'object' ? JSON.stringify(val) : val) : '<span style="opacity:0.3;">null</span>'}</td>`;
+          }).join('') + '</tr>';
+        }).join('');
+      } else {
+        tbody += `<tr><td colspan="${data.columns.length}" style="text-align:center;padding:20px;color:var(--text-muted);">No records found matching filters.</td></tr>`;
+      }
+      tbody += '</tbody>';
+      table.innerHTML = thead + tbody;
+    }
+
+    function changePage(delta) {
+      loadExplorerData(explorerCurrentPage + delta);
+    }
+
+    async function refreshSchema() {
+      try {
+        const res = await fetch('/api/v1/_refresh', { 
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (res.status === 401) {
+          showToast('Unauthorized to refresh schema. Please sign in.');
+          openAuthModal();
+          return;
+        }
+        showToast('Schema refreshed: ' + data.tables + ' tables loaded.');
+        await init();
+      } catch (err) {
+        showToast('Refresh failed: ' + err.message);
+      }
+    }
+
+    function copyJSON(btn, preId) {
+      const pre = document.getElementById(preId);
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.textContent);
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 1200);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function downloadFile(content, fileName, contentType) {
+      const a = document.createElement("a");
+      const file = new Blob([content], { type: contentType });
+      a.href = URL.createObjectURL(file);
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // --- Real-Time SSE Stream Helpers ---
+    let sseSource = null;
+    let streamEventsCount = 0;
+
+    function renderStreamSelect() {
+      const token = localStorage.getItem('dynago_jwt_token');
+      const isAuthRequired = appMeta && appMeta.flags.auth_enabled && !token;
+      const lockedBox = document.getElementById('streamLockedView');
+      const activeBox = document.getElementById('streamActiveView');
+
+      if (lockedBox && activeBox) {
+        if (isAuthRequired) {
+          lockedBox.style.display = 'block';
+          activeBox.style.display = 'none';
+          if (sseSource) {
+            sseSource.close();
+            sseSource = null;
+          }
+          return;
+        } else {
+          lockedBox.style.display = 'none';
+          activeBox.style.display = 'flex';
+        }
+      }
+
+      const select = document.getElementById('streamTargetSelect');
+      if (!select || !appMeta) return;
+
+      select.innerHTML = '';
+      const userRole = localStorage.getItem('dynago_user_role') || (token ? 'viewer' : 'anonymous');
+      const isAdmin = !appMeta.flags.auth_enabled || userRole === 'admin';
+
+      if (isAdmin) {
+        select.innerHTML = '<option value="">All Tables (Global Stream)</option>';
+      }
+
+      appMeta.tables.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = t.name + ' table';
+        select.appendChild(opt);
+      });
+
+      if (!isAdmin && select.options.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No permitted stream targets';
+        opt.disabled = true;
+        select.appendChild(opt);
+      }
+
+      onStreamTargetChange();
+    }
+
+    function onStreamTargetChange() {
+      const target = document.getElementById('streamTargetSelect').value;
+      const preview = document.getElementById('streamUrlPreview');
+      if (target) {
+        preview.textContent = 'GET /api/v1/stream/' + target;
+      } else {
+        preview.textContent = 'GET /api/v1/stream';
+      }
+
+      if (sseSource) {
+        toggleSSEStream(); // disconnect
+        toggleSSEStream(); // reconnect
+      }
+    }
+
+    function toggleSSEStream() {
+      const btn = document.getElementById('btnToggleStream');
+      const dot = document.getElementById('streamStatusDot');
+      const pill = document.getElementById('streamStatusPill');
+      const text = document.getElementById('streamStatusText');
+
+      if (sseSource) {
+        sseSource.close();
+        sseSource = null;
+        btn.textContent = 'Connect Stream';
+        dot.className = 'status-dot dot-warning';
+        pill.style.color = '#fbbf24';
+        text.textContent = 'Disconnected';
+        showToast('Stream disconnected.');
+        return;
+      }
+
+      const target = document.getElementById('streamTargetSelect').value;
+      let streamUrl = target ? ('/api/v1/stream/' + encodeURIComponent(target)) : '/api/v1/stream';
+
+      const token = localStorage.getItem('dynago_jwt_token');
+      if (token) {
+        streamUrl += (streamUrl.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token);
+      } else if (appMeta && appMeta.flags.auth_enabled) {
+        showToast('Sign in required to connect to real-time event stream.');
+        openAuthModal();
+        return;
+      }
+
+      text.textContent = 'Connecting...';
+      dot.className = 'status-dot dot-gray';
+
+      sseSource = new EventSource(streamUrl);
+
+      sseSource.addEventListener('connected', e => {
+        dot.className = 'status-dot';
+        pill.style.color = '#4ade80';
+        text.textContent = 'Connected';
+        btn.textContent = 'Disconnect Stream';
+        showToast('Connected to real-time event stream.');
+      });
+
+      const handleMutation = (action, e) => {
+        try {
+          const data = JSON.parse(e.data);
+          addStreamEventCard(action, data);
+        } catch (err) {
+          console.error('SSE parse error:', err);
+        }
+      };
+
+      sseSource.addEventListener('INSERT', e => handleMutation('INSERT', e));
+      sseSource.addEventListener('UPDATE', e => handleMutation('UPDATE', e));
+      sseSource.addEventListener('DELETE', e => handleMutation('DELETE', e));
+      sseSource.addEventListener('MUTATION', e => handleMutation('MUTATION', e));
+
+      sseSource.onerror = err => {
+        if (sseSource && sseSource.readyState === EventSource.CLOSED) {
+          dot.className = 'status-dot dot-warning';
+          pill.style.color = '#f87171';
+          text.textContent = 'Connection Lost';
+          btn.textContent = 'Reconnect Stream';
+          if (appMeta && appMeta.flags.auth_enabled && !localStorage.getItem('dynago_jwt_token')) {
+            showToast('Sign in required. Please sign in with admin token.');
+          }
+        }
+      };
+    }
+
+    function addStreamEventCard(action, data) {
+      const feed = document.getElementById('streamFeed');
+      const empty = document.getElementById('streamEmptyState');
+      if (empty) empty.style.display = 'none';
+
+      streamEventsCount++;
+      document.getElementById('streamEventCountBadge').textContent = streamEventsCount + ' events received';
+
+      const card = document.createElement('div');
+      card.className = 'stream-event-card';
+
+      let actionClass = 'action-insert';
+      if (action === 'UPDATE') actionClass = 'action-update';
+      if (action === 'DELETE') actionClass = 'action-delete';
+
+      const timeStr = new Date(data.timestamp || Date.now()).toLocaleTimeString();
+      const recJson = data.record ? JSON.stringify(data.record, null, 2) : 'No payload';
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="action-badge ${actionClass}">${action}</span>
+            <strong style="color:#fff; font-size:13px;">${data.table}</strong>
+          </div>
+          <span style="font-size:11px; color:var(--text-dim);">${timeStr}</span>
+        </div>
+        <pre class="json-box" style="max-height:160px; font-size:12px; margin:0; padding:8px;">${recJson}</pre>
+      `;
+
+      feed.insertBefore(card, feed.firstChild);
+    }
+
+    function clearStreamEvents() {
+      const feed = document.getElementById('streamFeed');
+      feed.innerHTML = `
+        <div id="streamEmptyState" class="locked-card" style="margin:20px auto;">
+          <h3>Waiting for real-time mutations</h3>
+          <p>Click Connect Stream above, then perform any INSERT, UPDATE, or DELETE via the REST API or SQL Console to see events arrive here in real time.</p>
+        </div>
+      `;
+      streamEventsCount = 0;
+      document.getElementById('streamEventCountBadge').textContent = '0 events received';
+    }
+
+    // Keyboard shortcut for SQL console: Ctrl+Enter
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const sqlTab = document.getElementById('tab-sql');
+        if (sqlTab && sqlTab.classList.contains('active')) {
+          runSQLQuery();
+        }
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
